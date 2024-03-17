@@ -27,7 +27,6 @@
 
 @import DeltaCore;
 @import mGBASwift;
-//@import mGBA;
 
 const char* const binaryName = "mGBA";
 const char* const projectName = "mGBADeltaCore";
@@ -102,14 +101,13 @@ static struct mLogger logger = { .log = _log };
     core->loadROM(core, rom);
     
     unsigned width, height;
-//    core->desiredVideoDimensions(core, &width, &height);
     core->baseVideoSize(core, &width, &height);
     _videoBuffer = [[NSMutableData alloc] initWithLength:(width * height * BYTES_PER_PIXEL)];
     core->setVideoBuffer(core, _videoBuffer.mutableBytes, width);
     core->setAudioBufferSize(core, SAMPLES);
 
-    blip_set_rates(core->getAudioChannel(core, 0), core->frequency(core), 32768);
-    blip_set_rates(core->getAudioChannel(core, 1), core->frequency(core), 32768);
+    blip_set_rates_(core->getAudioChannel(core, 0), core->frequency(core), 32768);
+    blip_set_rates_(core->getAudioChannel(core, 1), core->frequency(core), 32768);
     
     mCoreAutoloadSave(core); // handles saving/loading battery saves automatically
 
@@ -141,9 +139,9 @@ static struct mLogger logger = { .log = _log };
 
     int16_t samples[SAMPLES * 2];
     size_t available = 0;
-    available = blip_samples_avail(core->getAudioChannel(core, 0));
-    blip_read_samples(core->getAudioChannel(core, 0), samples, (int)available, true);
-    blip_read_samples(core->getAudioChannel(core, 1), samples + 1, (int)available, true);
+    available = blip_samples_avail_(core->getAudioChannel(core, 0));
+    blip_read_samples_(core->getAudioChannel(core, 0), samples, (int)available, true);
+    blip_read_samples_(core->getAudioChannel(core, 1), samples + 1, (int)available, true);
     
     [self.audioRenderer.audioBuffer writeBuffer:samples size:available * 4];
     
@@ -250,12 +248,6 @@ static struct mLogger logger = { .log = _log };
     }
     
     return gameSaveDirectoryURL;
-}
-
-#pragma mark - Palette -
-
-- (void)updatePalette
-{
 }
 
 @end
