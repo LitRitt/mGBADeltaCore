@@ -95,7 +95,8 @@ static struct mLogger logger = { .log = _log };
     if (core->dirs.save) {
         core->dirs.save->close(core->dirs.save);
     }
-    core->dirs.save = VDirOpen(self.gameSaveDirectoryURL.fileSystemRepresentation);
+    core->dirs.save = VDirOpen(URL.URLByDeletingPathExtension.URLByDeletingLastPathComponent.fileSystemRepresentation);
+    strcpy(core->dirs.baseName, [URL.URLByDeletingPathExtension.lastPathComponent UTF8String]);
     
     struct VFile* rom = VFileOpen(URL.fileSystemRepresentation, O_RDONLY);
     core->loadROM(core, rom);
@@ -228,26 +229,6 @@ static struct mLogger logger = { .log = _log };
 - (NSTimeInterval)frameDuration
 {
     return (1.0 / 59.7275);
-}
-
-#pragma mark - Getters/Setters -
-
-- (NSURL *)gameSaveDirectoryURL
-{
-    // the nature of using SPM doesn't allow the circular dependency of
-    // exposing DeltaCore properties to Objective-C from mGBA.swift :(
-    // since we cannot access mGBA.core.resourceBundle from here, create
-    // a directory "Saves" alongside "Games" and "Save States" instead
-    
-    NSURL *gameSaveDirectoryURL = [[[[self.gameURL URLByDeletingPathExtension] URLByDeletingLastPathComponent] URLByDeletingLastPathComponent] URLByAppendingPathComponent:@"Saves" isDirectory:YES];
-    
-    NSError *error = nil;
-    if (![[NSFileManager defaultManager] createDirectoryAtURL:gameSaveDirectoryURL withIntermediateDirectories:YES attributes:nil error:nil])
-    {
-        NSLog(@"Unable to create Game Save Directory. %@", error);
-    }
-    
-    return gameSaveDirectoryURL;
 }
 
 @end
