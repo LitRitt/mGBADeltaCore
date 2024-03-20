@@ -35,7 +35,10 @@ public struct mGBA: DeltaCoreProtocol
     public let videoFormat = VideoFormat(format: .bitmap(.rgba8), dimensions: CGSize(width: 240, height: 160))
 
     public var supportedCheatFormats: Set<CheatFormat> {
-        return []
+        let actionReplayFormat = CheatFormat(name: NSLocalizedString("Action Replay", comment: ""), format: "XXXXXXXX YYYYYYYY", type: .actionReplay)
+        let gameSharkFormat = CheatFormat(name: NSLocalizedString("GameShark", comment: ""), format: "XXXXXXXX YYYYYYYY", type: .gameShark)
+        let codeBreakerFormat = CheatFormat(name: NSLocalizedString("Code Breaker", comment: ""), format: "XXXXXXXX YYYY", type: .codeBreaker)
+        return [actionReplayFormat, gameSharkFormat, codeBreakerFormat]
     }
 
     public var emulatorBridge: EmulatorBridging { mGBAEmulatorBridge.shared as! EmulatorBridging }

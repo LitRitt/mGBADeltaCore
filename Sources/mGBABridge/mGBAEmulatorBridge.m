@@ -7,6 +7,7 @@
 //
 
 #import "mGBAEmulatorBridge.h"
+#import "mGBATypes.h"
 
 #include <mgba-util/common.h>
 
@@ -119,17 +120,14 @@ static struct mLogger logger = { .log = _log };
 
 - (void)stop
 {
-    NSLog(@"<><><><><><><><> mGBA <> stop");
 }
 
 - (void)pause
 {
-    NSLog(@"<><><><><><><><> mGBA <> pause");
 }
 
 - (void)resume
 {
-    NSLog(@"<><><><><><><><> mGBA <> resume");
 }
 
 #pragma mark - Game Loop -
@@ -183,12 +181,10 @@ static struct mLogger logger = { .log = _log };
 
 - (void)saveGameSaveToURL:(NSURL *)URL
 {
-    NSLog(@"<><><><><><><><> mGBA <> saveGameSaveToURL");
 }
 
 - (void)loadGameSaveFromURL:(NSURL *)URL
 {
-    NSLog(@"<><><><><><><><> mGBA <> loadGameSaveFromURL");
 }
 
 #pragma mark - Save States -
@@ -211,17 +207,38 @@ static struct mLogger logger = { .log = _log };
 
 - (BOOL)addCheatCode:(NSString *)cheatCode type:(NSString *)type
 {
+    cheatCode = [cheatCode stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSString *codeId = [cheatCode stringByAppendingFormat:@"/%@", type];
+    
+    struct mCheatDevice* cheats = core->cheatDevice(core);
+    struct mCheatSet* cheatSet = cheats->createSet(cheats, [codeId UTF8String]);
+    
+    size_t size = mCheatSetsSize(&cheats->cheats);
+    if (size) {
+        cheatSet->copyProperties(cheatSet, *mCheatSetsGetPointer(&cheats->cheats, size - 1));
+    }
+    
+    int codeType = GBA_CHEAT_AUTODETECT;
+    
+    NSArray *codeSet = [cheatCode componentsSeparatedByString:@"\n"];
+    for (id codeLine in codeSet) {
+        mCheatAddLine(cheatSet, [codeLine UTF8String], codeType);
+    }
+    
+    cheatSet->enabled = YES;
+    mCheatAddSet(cheats, cheatSet);
+    
     return YES;
 }
 
 - (void)resetCheats
 {
-    NSLog(@"<><><><><><><><> mGBA <> resetCheats");
+    struct mCheatDevice* cheats = core->cheatDevice(core);
+    mCheatDeviceClear(cheats);
 }
 
 - (void)updateCheats
 {
-    NSLog(@"<><><><><><><><> mGBA <> updateCheats");
 }
 
 #pragma mark - Getters/Setters -
