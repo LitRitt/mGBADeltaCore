@@ -14,6 +14,7 @@
 
 // Extensible Enums
 FOUNDATION_EXPORT GameType const GameTypeGBA NS_SWIFT_NAME(gba);
+FOUNDATION_EXPORT GameType const GameTypeGBC NS_SWIFT_NAME(gbc);
 
 FOUNDATION_EXPORT CheatType const CheatTypeActionReplay;
 FOUNDATION_EXPORT CheatType const CheatTypeGameShark;

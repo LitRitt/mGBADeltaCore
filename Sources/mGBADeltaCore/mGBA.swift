@@ -20,6 +20,13 @@ extension mGBAGameInput: Input
     }
 }
 
+extension mGBCGameInput: Input
+{
+    public var type: InputType {
+        return .game(.gbc)
+    }
+}
+
 public struct mGBA: DeltaCoreProtocol
 {
     public static let core = mGBA()
@@ -42,6 +49,33 @@ public struct mGBA: DeltaCoreProtocol
     }
 
     public var emulatorBridge: EmulatorBridging { mGBAEmulatorBridge.shared as! EmulatorBridging }
+    
+    public var resourceBundle: Bundle { Bundle.module }
+    
+    private init()
+    {
+    }
+}
+
+public struct mGBC: DeltaCoreProtocol
+{
+    public static let core = mGBC()
+    
+    public var name: String { "mGBC" }
+    public var identifier: String { "com.rileytestut.mGBCDeltaCore" }
+    
+    public var gameType: GameType { .gbc }
+    public var gameInputType: Input.Type { mGBCGameInput.self }
+    public var gameSaveFileExtension: String { "sav" }
+    
+    public let audioFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 32768, channels: 2, interleaved: true)!
+    public let videoFormat = VideoFormat(format: .bitmap(.rgba8), dimensions: CGSize(width: 256, height: 224))
+
+    public var supportedCheatFormats: Set<CheatFormat> {
+        return []
+    }
+
+    public var emulatorBridge: EmulatorBridging { mGBCEmulatorBridge.shared as! EmulatorBridging }
     
     public var resourceBundle: Bundle { Bundle.module }
     
