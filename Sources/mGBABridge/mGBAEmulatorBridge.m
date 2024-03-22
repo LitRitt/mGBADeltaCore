@@ -91,6 +91,22 @@ static struct mLogger logger = { .log = _log };
 
 - (void)startWithGameURL:(NSURL *)URL
 {
+    // Fully reinitialize core
+    mCoreConfigDeinit(&core->config);
+    core->deinit(core);
+    
+    core = GBACoreCreate();
+    mCoreInitConfig(core, nil);
+    
+    mLogSetDefaultLogger(&logger);
+    
+    struct mCoreOptions options = { .skipBios = true };
+    mCoreConfigLoadDefaults(&core->config, &options);
+    
+    core->init(core);
+    
+    [self updateSettings];
+    
     self.gameURL = URL;
     
     if (core->dirs.save) {
@@ -246,6 +262,26 @@ static struct mLogger logger = { .log = _log };
 - (NSTimeInterval)frameDuration
 {
     return (1.0 / 59.7275);
+}
+
+#pragma mark - Settings -
+
+- (void)updateSettings
+{
+    struct mCoreOptions opts = {
+        .skipBios = true,
+        .volume = 0x100,
+    };
+    
+    // Force Game Boy Player
+    mCoreConfigSetIntValue(&core->config, "gba.forceGbp", _forceGBP);
+    core->reloadConfigOption(core, "gba.forceGbp", NULL);
+    
+    // Frameskip
+    opts.frameskip = _frameskip;
+    
+    mCoreConfigLoadDefaults(&core->config, &opts);
+    mCoreLoadConfig(core);
 }
 
 @end

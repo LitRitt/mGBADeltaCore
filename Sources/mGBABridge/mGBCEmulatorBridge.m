@@ -283,6 +283,11 @@ static struct mLogger logger = { .log = _log };
 
 - (void)updateSettings
 {
+    struct mCoreOptions opts = {
+        .skipBios = true,
+        .volume = 0x100,
+    };
+    
     // Device Model
     enum GBModel* model;
     const char* modelName;
@@ -359,6 +364,12 @@ static struct mLogger logger = { .log = _log };
     mCoreConfigSetUIntValue(&core->config, "gb.pal[10]", _palette2color2);
     mCoreConfigSetUIntValue(&core->config, "gb.pal[11]", _palette2color3);
     core->reloadConfigOption(core, "gb.pal", NULL);
+    
+    // Frameskip
+    opts.frameskip = _frameskip;
+    
+    mCoreConfigLoadDefaults(&core->config, &opts);
+    mCoreLoadConfig(core);
 }
 
 @end

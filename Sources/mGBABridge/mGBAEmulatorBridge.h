@@ -19,6 +19,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (class, nonatomic, readonly) mGBAEmulatorBridge *sharedBridge;
 
+@property (nonatomic) BOOL forceGBP;
+@property (nonatomic) int frameskip;
+
+- (void)updateSettings;
+
 @end
 
 NS_ASSUME_NONNULL_END
