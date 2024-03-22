@@ -72,7 +72,9 @@ public struct mGBC: DeltaCoreProtocol
     public let videoFormat = VideoFormat(format: .bitmap(.rgba8), dimensions: CGSize(width: 256, height: 224))
 
     public var supportedCheatFormats: Set<CheatFormat> {
-        return []
+        let gameGenieFormat = CheatFormat(name: NSLocalizedString("Game Genie", comment: ""), format: "XXX-YYY-ZZZ", type: .gameGenie)
+        let gameSharkFormat = CheatFormat(name: NSLocalizedString("GameShark", comment: ""), format: "XXXXXXXX", type: .gameShark)
+        return [gameGenieFormat, gameSharkFormat]
     }
 
     public var emulatorBridge: EmulatorBridging { mGBCEmulatorBridge.shared as! EmulatorBridging }

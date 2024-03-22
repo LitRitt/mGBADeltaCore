@@ -25,9 +25,11 @@
 #include <mgba/gb/core.h>
 #include <mgba/internal/gb/cheats.h>
 #include <mgba/internal/gb/input.h>
+#include <mgba/internal/gb/overrides.h>
 #include <mgba-util/circle-buffer.h>
 #include <mgba-util/memory.h>
 #include <mgba-util/vfs.h>
+#include <mgba/gb/interface.h>
 
 #define SAMPLES 1024
 
@@ -84,6 +86,7 @@ static struct mLogger logger = { .log = _log };
         
         struct mCoreOptions options = { .skipBios = true };
         mCoreConfigLoadDefaults(&core->config, &options);
+        
         core->init(core);
     }
     
@@ -94,6 +97,22 @@ static struct mLogger logger = { .log = _log };
 
 - (void)startWithGameURL:(NSURL *)URL
 {
+    // Fully reinitialize core
+    mCoreConfigDeinit(&core->config);
+    core->deinit(core);
+    
+    core = GBCoreCreate();
+    mCoreInitConfig(core, nil);
+    
+    mLogSetDefaultLogger(&logger);
+    
+    struct mCoreOptions options = { .skipBios = true };
+    mCoreConfigLoadDefaults(&core->config, &options);
+    
+    core->init(core);
+    
+    [self updateSettings];
+    
     self.gameURL = URL;
     
     if (core->dirs.save) {
@@ -258,6 +277,88 @@ static struct mLogger logger = { .log = _log };
 - (NSTimeInterval)frameDuration
 {
     return (1.0 / 59.7275);
+}
+
+#pragma mark - Settings -
+
+- (void)updateSettings
+{
+    // Device Model
+    enum GBModel* model;
+    const char* modelName;
+
+    if (strcmp([_gbModel UTF8String], "Game Boy") == 0) {
+        model = GB_MODEL_DMG;
+    } else if (strcmp([_gbModel UTF8String], "Super Game Boy") == 0) {
+        model = GB_MODEL_SGB;
+    } else if (strcmp([_gbModel UTF8String], "Game Boy Color") == 0) {
+        model = GB_MODEL_CGB;
+    } else if (strcmp([_gbModel UTF8String], "Game Boy Advance") == 0) {
+        model = GB_MODEL_AGB;
+    } else {
+        model = GB_MODEL_AUTODETECT;
+    }
+
+    modelName = GBModelToName(model);
+    mCoreConfigSetValue(&core->config, "gb.model", modelName);
+    mCoreConfigSetValue(&core->config, "sgb.model", modelName);
+    mCoreConfigSetValue(&core->config, "cgb.model", modelName);
+    mCoreConfigSetValue(&core->config, "cgb.hybridModel", modelName);
+    mCoreConfigSetValue(&core->config, "cgb.sgbModel", modelName);
+    core->reloadConfigOption(core, "gb.model", NULL);
+    core->reloadConfigOption(core, "sgb.model", NULL);
+    core->reloadConfigOption(core, "cgb.model", NULL);
+    core->reloadConfigOption(core, "cgb.hybridModel", NULL);
+    core->reloadConfigOption(core, "cgb.sgbModel", NULL);
+
+    // Super Game Boy Borders
+    mCoreConfigSetIntValue(&core->config, "sgb.borders", _sgbBorders);
+    core->reloadConfigOption(core, "sgb.borders", NULL);
+    
+    // Idle Optimization
+    const char* idleOptimization;
+    
+    if (strcmp([_idleOptimization UTF8String], "Don't Remove") == 0) {
+        idleOptimization = "ignore";
+    } else if (strcmp([_idleOptimization UTF8String], "Remove Known") == 0) {
+        idleOptimization = "remove";
+    } else if (strcmp([_idleOptimization UTF8String], "Detect and Remove") == 0) {
+        idleOptimization = "detect";
+    }
+    
+    mCoreConfigSetValue(&core->config, "idleOptimization", idleOptimization);
+    core->reloadConfigOption(core, "idleOptimization", NULL);
+    
+    // Palette Lookup
+    int gbColorLookup;
+    
+    if (strcmp([_paletteLookup UTF8String], "Fallback") == 0) {
+        gbColorLookup = GB_COLORS_SGB_CGB_FALLBACK;
+    } else if (strcmp([_paletteLookup UTF8String], "Super Game Boy") == 0) {
+        gbColorLookup = GB_COLORS_SGB;
+    } else if (strcmp([_paletteLookup UTF8String], "Game Boy Color") == 0) {
+        gbColorLookup = GB_COLORS_CGB;
+    } else if (strcmp([_paletteLookup UTF8String], "None") == 0) {
+        gbColorLookup = GB_COLORS_NONE;
+    }
+    
+    mCoreConfigSetUIntValue(&core->config, "gb.colors", gbColorLookup);
+    core->reloadConfigOption(core, "gb.colors", NULL);
+    
+    // Custom Palettes
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[0]", _palette0color0);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[1]", _palette0color1);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[2]", _palette0color2);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[3]", _palette0color2);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[4]", _palette1color0);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[5]", _palette1color1);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[6]", _palette1color2);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[7]", _palette1color3);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[8]", _palette2color0);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[9]", _palette2color1);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[10]", _palette2color2);
+    mCoreConfigSetUIntValue(&core->config, "gb.pal[11]", _palette2color3);
+    core->reloadConfigOption(core, "gb.pal", NULL);
 }
 
 @end

@@ -18,6 +18,26 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (class, nonatomic, readonly) mGBCEmulatorBridge *sharedBridge;
 
+@property (nonatomic) UInt32 palette0color0;
+@property (nonatomic) UInt32 palette0color1;
+@property (nonatomic) UInt32 palette0color2;
+@property (nonatomic) UInt32 palette0color3;
+@property (nonatomic) UInt32 palette1color0;
+@property (nonatomic) UInt32 palette1color1;
+@property (nonatomic) UInt32 palette1color2;
+@property (nonatomic) UInt32 palette1color3;
+@property (nonatomic) UInt32 palette2color0;
+@property (nonatomic) UInt32 palette2color1;
+@property (nonatomic) UInt32 palette2color2;
+@property (nonatomic) UInt32 palette2color3;
+
+@property (nonatomic) BOOL sgbBorders;
+@property (nonatomic) NSString *gbModel;
+@property (nonatomic) NSString *paletteLookup;
+@property (nonatomic) NSString *idleOptimization;
+
+- (void)updateSettings;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -14,3 +14,4 @@ GameType const GameTypeGBC = @"com.rileytestut.delta.game.gbc";
 CheatType const CheatTypeActionReplay = @"ActionReplay";
 CheatType const CheatTypeGameShark = @"GameShark";
 CheatType const CheatTypeCodeBreaker = @"CodeBreaker";
+CheatType const CheatTypeGameGenie = @"GameGenie";
