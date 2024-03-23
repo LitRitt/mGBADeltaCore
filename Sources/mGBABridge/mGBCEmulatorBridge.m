@@ -5,16 +5,10 @@
 //  Created by Chris Rittenhouse on 3/21/24.
 //
 
-//
-//  mGBAEmulatorBridge.h
-//  mGBABridge
-//
-//  Created by Ian Clawson on 7/26/21.
-//  Copyright © 2021 Riley Testut. All rights reserved.
-//
-
 #import "mGBCEmulatorBridge.h"
 #import "mGBATypes.h"
+
+#import <CoreMotion/CoreMotion.h>
 
 #include <mgba-util/common.h>
 
@@ -47,6 +41,8 @@
 @property (nonatomic, copy, nonnull, readonly) NSURL *gameSaveDirectoryURL;
 @property (nonatomic, readonly) NSMutableData *videoBuffer;
 
+@property (strong, nonatomic, readonly) CMMotionManager *motionManager;
+
 @end
 
 static void _log(struct mLogger* log,
@@ -57,6 +53,17 @@ static void _log(struct mLogger* log,
 {}
 
 static struct mLogger logger = { .log = _log };
+
+static struct mRotationSource rotation;
+static void _sampleRotation(struct mRotationSource* source);
+static int32_t _readTiltX(struct mRotationSource* source);
+static int32_t _readTiltY(struct mRotationSource* source);
+static int32_t _readGyroZ(struct mRotationSource* source);
+
+static double_t accelerometerSensitivity = 1.0;
+static int32_t tiltX = 0;
+static int32_t tiltY = 0;
+static int32_t gyroZ = 0;
 
 @implementation mGBCEmulatorBridge
 @synthesize audioRenderer = _audioRenderer;
@@ -88,6 +95,8 @@ static struct mLogger logger = { .log = _log };
         mCoreConfigLoadDefaults(&core->config, &options);
         
         core->init(core);
+        
+        _motionManager = [[CMMotionManager alloc] init];
     }
     
     return self;
@@ -97,9 +106,11 @@ static struct mLogger logger = { .log = _log };
 
 - (void)startWithGameURL:(NSURL *)URL
 {
-    // Fully reinitialize core
-    mCoreConfigDeinit(&core->config);
-    core->deinit(core);
+    if (core) {
+        // Fully reinitialize core
+        mCoreConfigDeinit(&core->config);
+        core->deinit(core);
+    }
     
     core = GBCoreCreate();
     mCoreInitConfig(core, nil);
@@ -108,8 +119,13 @@ static struct mLogger logger = { .log = _log };
     
     struct mCoreOptions options = { .skipBios = true };
     mCoreConfigLoadDefaults(&core->config, &options);
-    
     core->init(core);
+    
+    rotation.sample = _sampleRotation;
+    rotation.readTiltX = _readTiltX;
+    rotation.readTiltY = _readTiltY;
+    rotation.readGyroZ = _readGyroZ;
+    core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
     
     [self updateSettings];
     
@@ -142,10 +158,12 @@ static struct mLogger logger = { .log = _log };
 
 - (void)stop
 {
+    [self deactivateAccelerometer];
 }
 
 - (void)pause
 {
+    [self deactivateAccelerometer];
 }
 
 - (void)resume
@@ -232,6 +250,32 @@ static struct mLogger logger = { .log = _log };
     struct VFile* vf = VFileOpen([URL fileSystemRepresentation], O_RDONLY);
     mCoreLoadStateNamed(core, vf, 0);
     vf->close(vf);
+}
+
+#pragma mark - Gyroscope -
+
+- (void)activateAccelerometer
+{
+    if ([self.motionManager isAccelerometerActive] || ![self.motionManager isAccelerometerAvailable])
+    {
+        return;
+    }
+    
+    [self.motionManager startAccelerometerUpdates];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:GBADidActivateGyroNotification object:self];
+}
+
+- (void)deactivateAccelerometer
+{
+    if (![self.motionManager isAccelerometerActive])
+    {
+        return;
+    }
+    
+    [self.motionManager startAccelerometerUpdates];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:GBADidDeactivateGyroNotification object:self];
 }
 
 #pragma mark - Cheats -
@@ -370,6 +414,43 @@ static struct mLogger logger = { .log = _log };
     
     mCoreConfigLoadDefaults(&core->config, &opts);
     mCoreLoadConfig(core);
+    
+    // Accelerometer
+    accelerometerSensitivity = _accelerometerSensitivity;
+}
+
+#pragma mark - mGBA -
+
+void _sampleRotation(struct mRotationSource* source)
+{
+    UNUSED(source);
+    if (![mGBCEmulatorBridge.sharedBridge.motionManager isAccelerometerActive])
+    {
+        [mGBCEmulatorBridge.sharedBridge activateAccelerometer];
+    }
+    
+    CMAccelerometerData *accelData = mGBCEmulatorBridge.sharedBridge.motionManager.accelerometerData;
+    
+    tiltX = accelData.acceleration.x * 2e8f * accelerometerSensitivity;
+    tiltY = accelData.acceleration.y * -2e8f * accelerometerSensitivity;
+}
+
+int32_t _readTiltX(struct mRotationSource* source)
+{
+    UNUSED(source);
+    return tiltX;
+}
+
+int32_t _readTiltY(struct mRotationSource* source)
+{
+    UNUSED(source);
+    return tiltY;
+}
+
+int32_t _readGyroZ(struct mRotationSource* source)
+{
+    UNUSED(source);
+    return 0;
 }
 
 @end

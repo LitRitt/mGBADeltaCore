@@ -35,7 +35,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSString *gbModel;
 @property (nonatomic) NSString *paletteLookup;
 @property (nonatomic) NSString *idleOptimization;
+
 @property (nonatomic) int frameskip;
+@property (nonatomic) double accelerometerSensitivity;
 
 - (void)updateSettings;
 
