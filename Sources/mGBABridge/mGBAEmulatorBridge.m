@@ -9,6 +9,8 @@
 #import "mGBAEmulatorBridge.h"
 #import "mGBATypes.h"
 
+#import <CoreMotion/CoreMotion.h>
+
 #include <mgba-util/common.h>
 
 #include <mgba/core/blip_buf.h>
@@ -42,6 +44,8 @@ const char* const projectVersion = "0.10.3";
 @property (nonatomic, copy, nonnull, readonly) NSURL *gameSaveDirectoryURL;
 @property (nonatomic, readonly) NSMutableData *videoBuffer;
 
+@property (strong, nonatomic, readonly) CMMotionManager *motionManager;
+
 @end
 
 static void _log(struct mLogger* log,
@@ -52,6 +56,14 @@ static void _log(struct mLogger* log,
 {}
 
 static struct mLogger logger = { .log = _log };
+
+static struct mRotationSource rotation;
+static void _sampleRotation(struct mRotationSource* source);
+static int32_t _readTiltX(struct mRotationSource* source);
+static int32_t _readTiltY(struct mRotationSource* source);
+static int32_t _readGyroZ(struct mRotationSource* source);
+
+static int32_t gyroZ = 0;
 
 @implementation mGBAEmulatorBridge
 @synthesize audioRenderer = _audioRenderer;
@@ -82,6 +94,8 @@ static struct mLogger logger = { .log = _log };
         struct mCoreOptions options = { .skipBios = true };
         mCoreConfigLoadDefaults(&core->config, &options);
         core->init(core);
+        
+        _motionManager = [[CMMotionManager alloc] init];
     }
     
     return self;
@@ -91,9 +105,11 @@ static struct mLogger logger = { .log = _log };
 
 - (void)startWithGameURL:(NSURL *)URL
 {
-    // Fully reinitialize core
-    mCoreConfigDeinit(&core->config);
-    core->deinit(core);
+    if (core) {
+        // Fully reinitialize core
+        mCoreConfigDeinit(&core->config);
+        core->deinit(core);
+    }
     
     core = GBACoreCreate();
     mCoreInitConfig(core, nil);
@@ -102,8 +118,13 @@ static struct mLogger logger = { .log = _log };
     
     struct mCoreOptions options = { .skipBios = true };
     mCoreConfigLoadDefaults(&core->config, &options);
-    
     core->init(core);
+    
+    rotation.sample = _sampleRotation;
+    rotation.readTiltX = _readTiltX;
+    rotation.readTiltY = _readTiltY;
+    rotation.readGyroZ = _readGyroZ;
+    core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
     
     [self updateSettings];
     
@@ -136,10 +157,12 @@ static struct mLogger logger = { .log = _log };
 
 - (void)stop
 {
+    [self deactivateGyroscope];
 }
 
 - (void)pause
 {
+    [self deactivateGyroscope];
 }
 
 - (void)resume
@@ -219,6 +242,32 @@ static struct mLogger logger = { .log = _log };
     vf->close(vf);
 }
 
+#pragma mark - Gyroscope -
+
+- (void)activateGyroscope
+{
+    if ([self.motionManager isGyroActive] || ![self.motionManager isGyroAvailable])
+    {
+        return;
+    }
+    
+    [self.motionManager startGyroUpdates];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:GBADidActivateGyroNotification object:self];
+}
+
+- (void)deactivateGyroscope
+{
+    if (![self.motionManager isGyroActive])
+    {
+        return;
+    }
+    
+    [self.motionManager stopGyroUpdates];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:GBADidDeactivateGyroNotification object:self];
+}
+
 #pragma mark - Cheats -
 
 - (BOOL)addCheatCode:(NSString *)cheatCode type:(NSString *)type
@@ -282,6 +331,39 @@ static struct mLogger logger = { .log = _log };
     
     mCoreConfigLoadDefaults(&core->config, &opts);
     mCoreLoadConfig(core);
+}
+
+#pragma mark - mGBA -
+
+void _sampleRotation(struct mRotationSource* source)
+{
+    UNUSED(source);
+    if (![mGBAEmulatorBridge.sharedBridge.motionManager isGyroActive])
+    {
+        [mGBAEmulatorBridge.sharedBridge activateGyroscope];
+    }
+    
+    CMGyroData *gyroData = mGBAEmulatorBridge.sharedBridge.motionManager.gyroData;
+    
+    gyroZ = gyroData.rotationRate.z * -1e8f;
+}
+
+int32_t _readTiltX(struct mRotationSource* source)
+{
+    UNUSED(source);
+    return 0;
+}
+
+int32_t _readTiltY(struct mRotationSource* source)
+{
+    UNUSED(source);
+    return 0;
+}
+
+int32_t _readGyroZ(struct mRotationSource* source)
+{
+    UNUSED(source);
+    return gyroZ;
 }
 
 @end

@@ -15,3 +15,6 @@ CheatType const CheatTypeActionReplay = @"ActionReplay";
 CheatType const CheatTypeGameShark = @"GameShark";
 CheatType const CheatTypeCodeBreaker = @"CodeBreaker";
 CheatType const CheatTypeGameGenie = @"GameGenie";
+
+NSNotificationName const GBADidActivateGyroNotification = @"GBADidActivateGyroNotification";
+NSNotificationName const GBADidDeactivateGyroNotification = @"GBADidDeactivateGyroNotification";
