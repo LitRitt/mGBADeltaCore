@@ -326,6 +326,20 @@ static int32_t gyroZ = 0;
     mCoreConfigSetIntValue(&core->config, "gba.forceGbp", _forceGBP);
     core->reloadConfigOption(core, "gba.forceGbp", NULL);
     
+    // Idle Optimization
+    const char* idleOptimization;
+    
+    if (strcmp([_idleOptimization UTF8String], "Don't Remove") == 0) {
+        idleOptimization = "ignore";
+    } else if (strcmp([_idleOptimization UTF8String], "Remove Known") == 0) {
+        idleOptimization = "remove";
+    } else if (strcmp([_idleOptimization UTF8String], "Detect and Remove") == 0) {
+        idleOptimization = "detect";
+    }
+    
+    mCoreConfigSetValue(&core->config, "idleOptimization", idleOptimization);
+    core->reloadConfigOption(core, "idleOptimization", NULL);
+    
     // Frameskip
     opts.frameskip = _frameskip;
     
