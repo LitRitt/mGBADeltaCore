@@ -10,6 +10,7 @@
 #import "mGBATypes.h"
 
 #import <CoreMotion/CoreMotion.h>
+//#import <SensorKit/SensorKit.h>
 
 #include <mgba-util/common.h>
 
@@ -18,6 +19,7 @@
 #include <mgba/core/cheats.h>
 #include <mgba/core/serialize.h>
 #include <mgba/gba/core.h>
+#include <mgba/gba/interface.h>
 #include <mgba/internal/gba/cheats.h>
 #include <mgba/internal/gba/input.h>
 #include <mgba-util/circle-buffer.h>
@@ -46,6 +48,7 @@ const char* const projectVersion = "0.10.3";
 
 @property (strong, nonatomic, readonly) CMMotionManager *motionManager;
 @property (strong, nonatomic, readonly) UIImpactFeedbackGenerator *impactGenerator;
+//@property (strong, nonatomic, readonly) SRSensorReader *lightSensor;
 
 @end
 
@@ -67,6 +70,10 @@ static int32_t gyroZ = 0;
 static struct mRumble rumble;
 static int rumbleUp = 0;
 static int rumbleDown = 0;
+
+static struct GBALuminanceSource lux;
+//static BOOL luxEnabled = false;
+static uint8_t luxLevel = 0;
 
 @implementation mGBAEmulatorBridge
 @synthesize audioRenderer = _audioRenderer;
@@ -106,6 +113,10 @@ static int rumbleDown = 0;
         
         _impactGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
         rumble.setRumble = _setRumbleGBA;
+        
+//        _lightSensor = [[SRSensorReader alloc] initWithSensor:SRSensorAmbientLightSensor];
+        lux.sample = _sampleLuminanceGBA;
+        lux.readLuminance = _readLuminanceGBA;
     }
     
     return self;
@@ -132,6 +143,7 @@ static int rumbleDown = 0;
     
     core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
     core->setPeripheral(core, mPERIPH_RUMBLE, &rumble);
+    core->setPeripheral(core, mPERIPH_GBA_LUMINANCE, &lux);
     
     [self updateSettings];
     
@@ -364,6 +376,9 @@ static int rumbleDown = 0;
     
     // Accelerometer
     accelerometerSensitivity = _accelerometerSensitivity;
+    
+    // Light Sensor
+    luxLevel = _luxLevel;
 }
 
 #pragma mark - mGBA Sensors -
@@ -411,6 +426,24 @@ void _setRumbleGBA(struct mRumble* rumble, int enable)
     } else {
         ++rumbleDown;
     }
+}
+
+void _sampleLuminanceGBA(struct GBALuminanceSource* source)
+{
+    UNUSED(source);
+}
+
+uint8_t _readLuminanceGBA(struct GBALuminanceSource* source)
+{
+    UNUSED(source);
+    int value = 0x16;
+    
+    if (luxLevel > 0 && luxLevel <= 10)
+    {
+        value += GBA_LUX_LEVELS[luxLevel - 1];
+    }
+    
+    return 0xFF - value;
 }
 
 @end

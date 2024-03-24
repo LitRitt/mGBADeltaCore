@@ -24,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) int frameskip;
 @property (nonatomic) double accelerometerSensitivity;
 @property (nonatomic) double rumbleIntensity;
+@property (nonatomic) int luxLevel;
+//@property (nonatomic) BOOL luxAllowed;
 
 - (void)updateSettings;
 
