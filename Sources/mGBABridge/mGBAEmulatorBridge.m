@@ -58,11 +58,9 @@ static void _log(struct mLogger* log,
 static struct mLogger logger = { .log = _log };
 
 static struct mRotationSource rotation;
-static void _sampleRotation(struct mRotationSource* source);
-static int32_t _readTiltX(struct mRotationSource* source);
-static int32_t _readTiltY(struct mRotationSource* source);
-static int32_t _readGyroZ(struct mRotationSource* source);
-
+static double_t accelerometerSensitivity = 1.0;
+static int32_t tiltX = 0;
+static int32_t tiltY = 0;
 static int32_t gyroZ = 0;
 
 @implementation mGBAEmulatorBridge
@@ -96,6 +94,10 @@ static int32_t gyroZ = 0;
         core->init(core);
         
         _motionManager = [[CMMotionManager alloc] init];
+        rotation.sample = _sampleRotationGBA;
+        rotation.readTiltX = _readTiltXGBA;
+        rotation.readTiltY = _readTiltYGBA;
+        rotation.readGyroZ = _readGyroZGBA;
     }
     
     return self;
@@ -120,10 +122,6 @@ static int32_t gyroZ = 0;
     mCoreConfigLoadDefaults(&core->config, &options);
     core->init(core);
     
-    rotation.sample = _sampleRotation;
-    rotation.readTiltX = _readTiltX;
-    rotation.readTiltY = _readTiltY;
-    rotation.readGyroZ = _readGyroZ;
     core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
     
     [self updateSettings];
@@ -157,12 +155,12 @@ static int32_t gyroZ = 0;
 
 - (void)stop
 {
-    [self deactivateGyroscope];
+    [self deactivateGyroscopeAndAccelerometer];
 }
 
 - (void)pause
 {
-    [self deactivateGyroscope];
+    [self deactivateGyroscopeAndAccelerometer];
 }
 
 - (void)resume
@@ -242,28 +240,30 @@ static int32_t gyroZ = 0;
     vf->close(vf);
 }
 
-#pragma mark - Gyroscope -
+#pragma mark - Sensors -
 
-- (void)activateGyroscope
+- (void)activateGyroscopeAndAccelerometer
 {
-    if ([self.motionManager isGyroActive] || ![self.motionManager isGyroAvailable])
+    if (([self.motionManager isGyroActive] && [self.motionManager isAccelerometerActive]) || ![self.motionManager isGyroAvailable] || ![self.motionManager isAccelerometerAvailable])
     {
         return;
     }
     
     [self.motionManager startGyroUpdates];
+    [self.motionManager startAccelerometerUpdates];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:GBADidActivateGyroNotification object:self];
 }
 
-- (void)deactivateGyroscope
+- (void)deactivateGyroscopeAndAccelerometer
 {
-    if (![self.motionManager isGyroActive])
+    if (!([self.motionManager isGyroActive] || [self.motionManager isAccelerometerActive]))
     {
         return;
     }
     
     [self.motionManager stopGyroUpdates];
+    [self.motionManager stopAccelerometerUpdates];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:GBADidDeactivateGyroNotification object:self];
 }
@@ -345,36 +345,42 @@ static int32_t gyroZ = 0;
     
     mCoreConfigLoadDefaults(&core->config, &opts);
     mCoreLoadConfig(core);
+    
+    // Accelerometer
+    accelerometerSensitivity = _accelerometerSensitivity;
 }
 
-#pragma mark - mGBA -
+#pragma mark - mGBA Sensors -
 
-void _sampleRotation(struct mRotationSource* source)
+void _sampleRotationGBA(struct mRotationSource* source)
 {
     UNUSED(source);
-    if (![mGBAEmulatorBridge.sharedBridge.motionManager isGyroActive])
+    if (!([mGBAEmulatorBridge.sharedBridge.motionManager isGyroActive] && [mGBAEmulatorBridge.sharedBridge.motionManager isAccelerometerActive]))
     {
-        [mGBAEmulatorBridge.sharedBridge activateGyroscope];
+        [mGBAEmulatorBridge.sharedBridge activateGyroscopeAndAccelerometer];
     }
     
     CMGyroData *gyroData = mGBAEmulatorBridge.sharedBridge.motionManager.gyroData;
+    CMAccelerometerData *accelerometerData = mGBAEmulatorBridge.sharedBridge.motionManager.accelerometerData;
     
     gyroZ = gyroData.rotationRate.z * -1e8f;
+    tiltX = accelerometerData.acceleration.x * 2e8f * accelerometerSensitivity;
+    tiltY = accelerometerData.acceleration.y * -2e8f * accelerometerSensitivity;
 }
 
-int32_t _readTiltX(struct mRotationSource* source)
+int32_t _readTiltXGBA(struct mRotationSource* source)
 {
     UNUSED(source);
-    return 0;
+    return tiltX;
 }
 
-int32_t _readTiltY(struct mRotationSource* source)
+int32_t _readTiltYGBA(struct mRotationSource* source)
 {
     UNUSED(source);
-    return 0;
+    return tiltY;
 }
 
-int32_t _readGyroZ(struct mRotationSource* source)
+int32_t _readGyroZGBA(struct mRotationSource* source)
 {
     UNUSED(source);
     return gyroZ;

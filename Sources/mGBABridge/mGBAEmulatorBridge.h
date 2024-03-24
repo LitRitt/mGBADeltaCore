@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL forceGBP;
 @property (nonatomic) NSString *idleOptimization;
 @property (nonatomic) int frameskip;
+@property (nonatomic) double accelerometerSensitivity;
 
 - (void)updateSettings;
 
