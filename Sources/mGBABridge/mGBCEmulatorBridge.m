@@ -42,6 +42,7 @@
 @property (nonatomic, readonly) NSMutableData *videoBuffer;
 
 @property (strong, nonatomic, readonly) CMMotionManager *motionManager;
+@property (strong, nonatomic, readonly) UIImpactFeedbackGenerator *impactGenerator;
 
 @end
 
@@ -55,15 +56,14 @@ static void _log(struct mLogger* log,
 static struct mLogger logger = { .log = _log };
 
 static struct mRotationSource rotation;
-static void _sampleRotation(struct mRotationSource* source);
-static int32_t _readTiltX(struct mRotationSource* source);
-static int32_t _readTiltY(struct mRotationSource* source);
-static int32_t _readGyroZ(struct mRotationSource* source);
-
 static double_t accelerometerSensitivity = 1.0;
 static int32_t tiltX = 0;
 static int32_t tiltY = 0;
 static int32_t gyroZ = 0;
+
+static struct mRumble rumble;
+static int rumbleUp = 0;
+static int rumbleDown = 0;
 
 @implementation mGBCEmulatorBridge
 @synthesize audioRenderer = _audioRenderer;
@@ -97,6 +97,13 @@ static int32_t gyroZ = 0;
         core->init(core);
         
         _motionManager = [[CMMotionManager alloc] init];
+        rotation.sample = _sampleRotationGBC;
+        rotation.readTiltX = _readTiltXGBC;
+        rotation.readTiltY = _readTiltYGBC;
+        rotation.readGyroZ = _readGyroZGBC;
+        
+        _impactGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
+        rumble.setRumble = _setRumbleGBC;
     }
     
     return self;
@@ -121,11 +128,8 @@ static int32_t gyroZ = 0;
     mCoreConfigLoadDefaults(&core->config, &options);
     core->init(core);
     
-    rotation.sample = _sampleRotation;
-    rotation.readTiltX = _readTiltX;
-    rotation.readTiltY = _readTiltY;
-    rotation.readGyroZ = _readGyroZ;
     core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
+    core->setPeripheral(core, mPERIPH_RUMBLE, &rumble);
     
     [self updateSettings];
     
@@ -198,6 +202,13 @@ static int32_t gyroZ = 0;
         memcpy(self.videoRenderer.videoBuffer, self.videoBuffer.mutableBytes, self.videoBuffer.length);
         [self.videoRenderer processFrame];
     }
+    
+    if (rumbleUp)
+    {
+        [_impactGenerator impactOccurredWithIntensity:_rumbleIntensity];
+    }
+    rumbleUp = 0;
+    rumbleDown = 0;
 }
 
 #pragma mark - Inputs -
@@ -252,7 +263,7 @@ static int32_t gyroZ = 0;
     vf->close(vf);
 }
 
-#pragma mark - Gyroscope -
+#pragma mark - Sensors -
 
 - (void)activateAccelerometer
 {
@@ -421,7 +432,7 @@ static int32_t gyroZ = 0;
 
 #pragma mark - mGBA -
 
-void _sampleRotation(struct mRotationSource* source)
+void _sampleRotationGBC(struct mRotationSource* source)
 {
     UNUSED(source);
     if (![mGBCEmulatorBridge.sharedBridge.motionManager isAccelerometerActive])
@@ -429,28 +440,39 @@ void _sampleRotation(struct mRotationSource* source)
         [mGBCEmulatorBridge.sharedBridge activateAccelerometer];
     }
     
-    CMAccelerometerData *accelData = mGBCEmulatorBridge.sharedBridge.motionManager.accelerometerData;
+    CMAccelerometerData *accelerometerData = mGBCEmulatorBridge.sharedBridge.motionManager.accelerometerData;
     
-    tiltX = accelData.acceleration.x * 2e8f * accelerometerSensitivity;
-    tiltY = accelData.acceleration.y * -2e8f * accelerometerSensitivity;
+    tiltX = accelerometerData.acceleration.x * 2e8f * accelerometerSensitivity;
+    tiltY = accelerometerData.acceleration.y * -2e8f * accelerometerSensitivity;
 }
 
-int32_t _readTiltX(struct mRotationSource* source)
+int32_t _readTiltXGBC(struct mRotationSource* source)
 {
     UNUSED(source);
     return tiltX;
 }
 
-int32_t _readTiltY(struct mRotationSource* source)
+int32_t _readTiltYGBC(struct mRotationSource* source)
 {
     UNUSED(source);
     return tiltY;
 }
 
-int32_t _readGyroZ(struct mRotationSource* source)
+int32_t _readGyroZGBC(struct mRotationSource* source)
 {
     UNUSED(source);
     return 0;
+}
+
+void _setRumbleGBC(struct mRumble* rumble, int enable)
+{
+    UNUSED(rumble);
+    
+    if (enable) {
+        ++rumbleUp;
+    } else {
+        ++rumbleDown;
+    }
 }
 
 @end

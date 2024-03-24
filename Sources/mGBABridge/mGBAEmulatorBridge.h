@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSString *idleOptimization;
 @property (nonatomic) int frameskip;
 @property (nonatomic) double accelerometerSensitivity;
+@property (nonatomic) double rumbleIntensity;
 
 - (void)updateSettings;
 

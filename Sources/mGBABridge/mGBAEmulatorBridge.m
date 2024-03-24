@@ -45,6 +45,7 @@ const char* const projectVersion = "0.10.3";
 @property (nonatomic, readonly) NSMutableData *videoBuffer;
 
 @property (strong, nonatomic, readonly) CMMotionManager *motionManager;
+@property (strong, nonatomic, readonly) UIImpactFeedbackGenerator *impactGenerator;
 
 @end
 
@@ -62,6 +63,10 @@ static double_t accelerometerSensitivity = 1.0;
 static int32_t tiltX = 0;
 static int32_t tiltY = 0;
 static int32_t gyroZ = 0;
+
+static struct mRumble rumble;
+static int rumbleUp = 0;
+static int rumbleDown = 0;
 
 @implementation mGBAEmulatorBridge
 @synthesize audioRenderer = _audioRenderer;
@@ -98,6 +103,9 @@ static int32_t gyroZ = 0;
         rotation.readTiltX = _readTiltXGBA;
         rotation.readTiltY = _readTiltYGBA;
         rotation.readGyroZ = _readGyroZGBA;
+        
+        _impactGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
+        rumble.setRumble = _setRumbleGBA;
     }
     
     return self;
@@ -123,6 +131,7 @@ static int32_t gyroZ = 0;
     core->init(core);
     
     core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
+    core->setPeripheral(core, mPERIPH_RUMBLE, &rumble);
     
     [self updateSettings];
     
@@ -186,6 +195,13 @@ static int32_t gyroZ = 0;
         memcpy(self.videoRenderer.videoBuffer, self.videoBuffer.mutableBytes, self.videoBuffer.length);
         [self.videoRenderer processFrame];
     }
+    
+    if (rumbleUp)
+    {
+        [_impactGenerator impactOccurredWithIntensity:_rumbleIntensity];
+    }
+    rumbleUp = 0;
+    rumbleDown = 0;
 }
 
 #pragma mark - Inputs -
@@ -384,6 +400,17 @@ int32_t _readGyroZGBA(struct mRotationSource* source)
 {
     UNUSED(source);
     return gyroZ;
+}
+
+void _setRumbleGBA(struct mRumble* rumble, int enable)
+{
+    UNUSED(rumble);
+    
+    if (enable) {
+        ++rumbleUp;
+    } else {
+        ++rumbleDown;
+    }
 }
 
 @end
