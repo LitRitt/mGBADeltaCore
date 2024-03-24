@@ -63,6 +63,7 @@ static struct mLogger logger = { .log = _log };
 
 static struct mRotationSource rotation;
 static double_t accelerometerSensitivity = 1.0;
+static int8_t orientation;
 static int32_t tiltX = 0;
 static int32_t tiltY = 0;
 static int32_t gyroZ = 0;
@@ -376,6 +377,7 @@ static uint8_t luxLevel = 0;
     
     // Accelerometer
     accelerometerSensitivity = _accelerometerSensitivity;
+    orientation = _orientation;
     
     // Light Sensor
     luxLevel = _luxLevel;
@@ -395,8 +397,29 @@ void _sampleRotationGBA(struct mRotationSource* source)
     CMAccelerometerData *accelerometerData = mGBAEmulatorBridge.sharedBridge.motionManager.accelerometerData;
     
     gyroZ = gyroData.rotationRate.z * -1e8f;
-    tiltX = accelerometerData.acceleration.x * 2e8f * accelerometerSensitivity;
-    tiltY = accelerometerData.acceleration.y * -2e8f * accelerometerSensitivity;
+    
+    switch (orientation)
+    {
+        case 1:
+            tiltX = accelerometerData.acceleration.y * 2e8f * accelerometerSensitivity;
+            tiltY = accelerometerData.acceleration.x * 2e8f * accelerometerSensitivity;
+            break;
+            
+        case 2:
+            tiltX = accelerometerData.acceleration.y * -2e8f * accelerometerSensitivity;
+            tiltY = accelerometerData.acceleration.x * -2e8f * accelerometerSensitivity;
+            break;
+            
+        case 3:
+            tiltX = accelerometerData.acceleration.x * -2e8f * accelerometerSensitivity;
+            tiltY = accelerometerData.acceleration.y * 2e8f * accelerometerSensitivity;
+            break;
+            
+        default:
+            tiltX = accelerometerData.acceleration.x * 2e8f * accelerometerSensitivity;
+            tiltY = accelerometerData.acceleration.y * -2e8f * accelerometerSensitivity;
+            break;
+    }
 }
 
 int32_t _readTiltXGBA(struct mRotationSource* source)

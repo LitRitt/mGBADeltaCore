@@ -57,6 +57,7 @@ static struct mLogger logger = { .log = _log };
 
 static struct mRotationSource rotation;
 static double_t accelerometerSensitivity = 1.0;
+static int8_t orientation;
 static int32_t tiltX = 0;
 static int32_t tiltY = 0;
 static int32_t gyroZ = 0;
@@ -284,7 +285,7 @@ static int rumbleDown = 0;
         return;
     }
     
-    [self.motionManager startAccelerometerUpdates];
+    [self.motionManager stopAccelerometerUpdates];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:GBADidDeactivateGyroNotification object:self];
 }
@@ -428,6 +429,7 @@ static int rumbleDown = 0;
     
     // Accelerometer
     accelerometerSensitivity = _accelerometerSensitivity;
+    orientation = _orientation;
 }
 
 #pragma mark - mGBA -
@@ -442,8 +444,28 @@ void _sampleRotationGBC(struct mRotationSource* source)
     
     CMAccelerometerData *accelerometerData = mGBCEmulatorBridge.sharedBridge.motionManager.accelerometerData;
     
-    tiltX = accelerometerData.acceleration.x * 2e8f * accelerometerSensitivity;
-    tiltY = accelerometerData.acceleration.y * -2e8f * accelerometerSensitivity;
+    switch (orientation)
+    {
+        case 1:
+            tiltX = accelerometerData.acceleration.y * 2e8f * accelerometerSensitivity;
+            tiltY = accelerometerData.acceleration.x * 2e8f * accelerometerSensitivity;
+            break;
+            
+        case 2:
+            tiltX = accelerometerData.acceleration.y * -2e8f * accelerometerSensitivity;
+            tiltY = accelerometerData.acceleration.x * -2e8f * accelerometerSensitivity;
+            break;
+            
+        case 3:
+            tiltX = accelerometerData.acceleration.x * -2e8f * accelerometerSensitivity;
+            tiltY = accelerometerData.acceleration.y * 2e8f * accelerometerSensitivity;
+            break;
+            
+        default:
+            tiltX = accelerometerData.acceleration.x * 2e8f * accelerometerSensitivity;
+            tiltY = accelerometerData.acceleration.y * -2e8f * accelerometerSensitivity;
+            break;
+    }
 }
 
 int32_t _readTiltXGBC(struct mRotationSource* source)
