@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL forceGBP;
 @property (nonatomic) NSString *idleOptimization;
 @property (nonatomic) int frameskip;
+@property (nonatomic) double gyroscopeSensitivity;
 @property (nonatomic) double accelerometerSensitivity;
 @property (nonatomic) int orientation;
 @property (nonatomic) double rumbleIntensity;

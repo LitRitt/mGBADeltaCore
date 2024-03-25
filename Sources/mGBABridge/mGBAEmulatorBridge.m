@@ -62,6 +62,7 @@ static void _log(struct mLogger* log,
 static struct mLogger logger = { .log = _log };
 
 static struct mRotationSource rotation;
+static double_t gyroscopeSensitivity = 1.0;
 static double_t accelerometerSensitivity = 1.0;
 static int8_t orientation;
 static int32_t tiltX = 0;
@@ -375,11 +376,10 @@ static uint8_t luxLevel = 0;
     mCoreConfigLoadDefaults(&core->config, &opts);
     mCoreLoadConfig(core);
     
-    // Accelerometer
+    // Sensors
+    gyroscopeSensitivity = _gyroscopeSensitivity;
     accelerometerSensitivity = _accelerometerSensitivity;
     orientation = _orientation;
-    
-    // Light Sensor
     luxLevel = _luxLevel;
 }
 
@@ -396,7 +396,7 @@ void _sampleRotationGBA(struct mRotationSource* source)
     CMGyroData *gyroData = mGBAEmulatorBridge.sharedBridge.motionManager.gyroData;
     CMAccelerometerData *accelerometerData = mGBAEmulatorBridge.sharedBridge.motionManager.accelerometerData;
     
-    gyroZ = gyroData.rotationRate.z * -1e8f;
+    gyroZ = gyroData.rotationRate.z * -1e8f * gyroscopeSensitivity;
     
     switch (orientation)
     {
