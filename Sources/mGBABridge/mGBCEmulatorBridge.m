@@ -376,20 +376,6 @@ static int rumbleDown = 0;
     mCoreConfigSetIntValue(&core->config, "sgb.borders", _sgbBorders);
     core->reloadConfigOption(core, "sgb.borders", NULL);
     
-    // Idle Optimization
-    const char* idleOptimization;
-    
-    if (strcmp([_idleOptimization UTF8String], "Don't Remove") == 0) {
-        idleOptimization = "ignore";
-    } else if (strcmp([_idleOptimization UTF8String], "Remove Known") == 0) {
-        idleOptimization = "remove";
-    } else if (strcmp([_idleOptimization UTF8String], "Detect and Remove") == 0) {
-        idleOptimization = "detect";
-    }
-    
-    mCoreConfigSetValue(&core->config, "idleOptimization", idleOptimization);
-    core->reloadConfigOption(core, "idleOptimization", NULL);
-    
     // Palette Lookup
     int gbColorLookup;
     

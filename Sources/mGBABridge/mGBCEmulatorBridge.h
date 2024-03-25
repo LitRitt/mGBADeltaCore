@@ -34,7 +34,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL sgbBorders;
 @property (nonatomic) NSString *gbModel;
 @property (nonatomic) NSString *paletteLookup;
-@property (nonatomic) NSString *idleOptimization;
 @property (nonatomic) int frameskip;
 @property (nonatomic) double accelerometerSensitivity;
 @property (nonatomic) int orientation;
