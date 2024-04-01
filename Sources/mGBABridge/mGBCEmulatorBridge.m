@@ -105,6 +105,9 @@ static int rumbleDown = 0;
         
         _impactGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
         rumble.setRumble = _setRumbleGBC;
+        
+        core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
+        core->setPeripheral(core, mPERIPH_RUMBLE, &rumble);
     }
     
     return self;
@@ -114,26 +117,6 @@ static int rumbleDown = 0;
 
 - (void)startWithGameURL:(NSURL *)URL
 {
-    if (core) {
-        // Fully reinitialize core
-        mCoreConfigDeinit(&core->config);
-        core->deinit(core);
-    }
-    
-    core = GBCoreCreate();
-    mCoreInitConfig(core, nil);
-    
-    mLogSetDefaultLogger(&logger);
-    
-    struct mCoreOptions options = { .skipBios = true };
-    mCoreConfigLoadDefaults(&core->config, &options);
-    core->init(core);
-    
-    core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
-    core->setPeripheral(core, mPERIPH_RUMBLE, &rumble);
-    
-    [self updateSettings];
-    
     self.gameURL = URL;
     
     if (core->dirs.save) {

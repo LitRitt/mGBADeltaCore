@@ -10,7 +10,6 @@
 #import "mGBATypes.h"
 
 #import <CoreMotion/CoreMotion.h>
-//#import <SensorKit/SensorKit.h>
 
 #include <mgba-util/common.h>
 
@@ -48,7 +47,6 @@ const char* const projectVersion = "0.10.3";
 
 @property (strong, nonatomic, readonly) CMMotionManager *motionManager;
 @property (strong, nonatomic, readonly) UIImpactFeedbackGenerator *impactGenerator;
-//@property (strong, nonatomic, readonly) SRSensorReader *lightSensor;
 
 @end
 
@@ -74,7 +72,6 @@ static int rumbleUp = 0;
 static int rumbleDown = 0;
 
 static struct GBALuminanceSource lux;
-//static BOOL luxEnabled = false;
 static uint8_t luxLevel = 0;
 
 @implementation mGBAEmulatorBridge
@@ -116,9 +113,12 @@ static uint8_t luxLevel = 0;
         _impactGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
         rumble.setRumble = _setRumbleGBA;
         
-//        _lightSensor = [[SRSensorReader alloc] initWithSensor:SRSensorAmbientLightSensor];
         lux.sample = _sampleLuminanceGBA;
         lux.readLuminance = _readLuminanceGBA;
+        
+        core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
+        core->setPeripheral(core, mPERIPH_RUMBLE, &rumble);
+        core->setPeripheral(core, mPERIPH_GBA_LUMINANCE, &lux);
     }
     
     return self;
@@ -128,27 +128,6 @@ static uint8_t luxLevel = 0;
 
 - (void)startWithGameURL:(NSURL *)URL
 {
-    if (core) {
-        // Fully reinitialize core
-        mCoreConfigDeinit(&core->config);
-        core->deinit(core);
-    }
-    
-    core = GBACoreCreate();
-    mCoreInitConfig(core, nil);
-    
-    mLogSetDefaultLogger(&logger);
-    
-    struct mCoreOptions options = { .skipBios = true };
-    mCoreConfigLoadDefaults(&core->config, &options);
-    core->init(core);
-    
-    core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
-    core->setPeripheral(core, mPERIPH_RUMBLE, &rumble);
-    core->setPeripheral(core, mPERIPH_GBA_LUMINANCE, &lux);
-    
-    [self updateSettings];
-    
     self.gameURL = URL;
     
     if (core->dirs.save) {
@@ -212,6 +191,7 @@ static uint8_t luxLevel = 0;
     
     if (rumbleUp)
     {
+        //TODO: Rumble Inensity
         [_impactGenerator impactOccurredWithIntensity:_rumbleIntensity];
     }
     rumbleUp = 0;
