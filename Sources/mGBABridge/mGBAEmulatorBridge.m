@@ -119,6 +119,15 @@ static uint8_t luxLevel = 0;
         core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
         core->setPeripheral(core, mPERIPH_RUMBLE, &rumble);
         core->setPeripheral(core, mPERIPH_GBA_LUMINANCE, &lux);
+        
+        _frameskip = 0;
+        _orientation = 0;
+        _forceGBP = NO;
+        _luxLevel = 0;
+        _rumbleIntensity = 1;
+        _idleOptimization = @"Remove Known";
+        _gyroscopeSensitivity = 1;
+        _accelerometerSensitivity = 1;
     }
     
     return self;

@@ -108,6 +108,26 @@ static int rumbleDown = 0;
         
         core->setPeripheral(core, mPERIPH_ROTATION, &rotation);
         core->setPeripheral(core, mPERIPH_RUMBLE, &rumble);
+        
+        _frameskip = 0;
+        _orientation = 0;
+        _rumbleIntensity = 1;
+        _accelerometerSensitivity = 1;
+        _palette0color0 = 0;
+        _palette0color1 = 0;
+        _palette0color2 = 0;
+        _palette0color3 = 0;
+        _palette1color0 = 0;
+        _palette1color1 = 0;
+        _palette1color2 = 0;
+        _palette1color3 = 0;
+        _palette2color0 = 0;
+        _palette2color1 = 0;
+        _palette2color2 = 0;
+        _palette2color3 = 0;
+        _gbModel = @"Autodetect";
+        _sgbBorders = YES;
+        _paletteLookup = @"Fallback";
     }
     
     return self;
