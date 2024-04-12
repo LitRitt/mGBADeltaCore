@@ -315,7 +315,7 @@ static int rumbleDown = 0;
 
 - (NSTimeInterval)frameDuration
 {
-    return (1.0 / 59.7275);
+    return (1.0 / 60);
 }
 
 #pragma mark - Settings -
