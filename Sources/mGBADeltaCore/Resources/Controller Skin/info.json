@@ -1,7 +1,7 @@
 {
   "name": "Standard GBA",
-  "identifier": "com.delta.gba.standard",
-  "gameTypeIdentifier": "com.rileytestut.delta.game.gba",
+  "identifier": "com.ignited.gba.standard",
+  "gameTypeIdentifier": "com.litritt.ignited.game.gba",
   "debug": false,
   "representations": {
     "iphone": {

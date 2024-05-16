@@ -32,7 +32,7 @@ public struct mGBA: DeltaCoreProtocol
     public static let core = mGBA()
     
     public var name: String { "mGBA" }
-    public var identifier: String { "com.rileytestut.mGBADeltaCore" }
+    public var identifier: String { "com.litritt.mGBADeltaCore" }
     
     public var gameType: GameType { .gba }
     public var gameInputType: Input.Type { mGBAGameInput.self }
@@ -62,7 +62,7 @@ public struct mGBC: DeltaCoreProtocol
     public static let core = mGBC()
     
     public var name: String { "mGBC" }
-    public var identifier: String { "com.rileytestut.mGBCDeltaCore" }
+    public var identifier: String { "com.litritt.mGBCDeltaCore" }
     
     public var gameType: GameType { .gbc }
     public var gameInputType: Input.Type { mGBCGameInput.self }

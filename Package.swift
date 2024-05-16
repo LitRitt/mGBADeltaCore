@@ -29,9 +29,9 @@ let package = Package(
             ],
             resources: [
                 .copy("Resources/Controller Skin/Standard.ignitedskin"),
-                .copy("Resources/Controller Skin/Standard-com.rileytestut.mGBCDeltaCore.ignitedskin"),
+                .copy("Resources/Controller Skin/Standard-com.litritt.mGBCDeltaCore.ignitedskin"),
                 .copy("Resources/Standard.deltamapping"),
-                .copy("Resources/Standard-com.rileytestut.mGBCDeltaCore.deltamapping"),
+                .copy("Resources/Standard-com.litritt.mGBCDeltaCore.deltamapping"),
             ]
         ),
         .target(
