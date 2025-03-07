@@ -13,14 +13,20 @@ import DeltaCore
 @_exported import mGBABridge
 @_exported import mGBASwift
 
-extension mGBAGameInput: Input
+public extension mGBA
+{
+    static let didActivateGyroNotification = NSNotification.Name.__GBADidActivateGyro
+    static let didDeactivateGyroNotification = NSNotification.Name.__GBADidDeactivateGyro
+}
+
+extension mGBAGameInput: @retroactive Input
 {
     public var type: InputType {
         return .game(.gba)
     }
 }
 
-extension mGBCGameInput: Input
+extension mGBCGameInput: @retroactive Input
 {
     public var type: InputType {
         return .game(.gbc)
