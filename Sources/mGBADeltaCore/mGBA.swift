@@ -44,7 +44,7 @@ public struct mGBA: DeltaCoreProtocol
     public var gameInputType: Input.Type { mGBAGameInput.self }
     public var gameSaveFileExtension: String { "sav" }
     
-    public let audioFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 32768, channels: 2, interleaved: true)!
+    public let audioFormat = AVAudioFormat(commonFormat: .pcmFormatInt32, sampleRate: 32768, channels: 2, interleaved: false)!
     public let videoFormat = VideoFormat(format: .bitmap(.rgba8), dimensions: CGSize(width: 240, height: 160))
 
     public var supportedCheatFormats: Set<CheatFormat> {
@@ -74,7 +74,7 @@ public struct mGBC: DeltaCoreProtocol
     public var gameInputType: Input.Type { mGBCGameInput.self }
     public var gameSaveFileExtension: String { "sav" }
     
-    public let audioFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 32768, channels: 2, interleaved: true)!
+    public let audioFormat = AVAudioFormat(commonFormat: .pcmFormatInt32, sampleRate: 32768, channels: 2, interleaved: false)!
     public let videoFormat = VideoFormat(format: .bitmap(.rgba8), dimensions: CGSize(width: 256, height: 224))
 
     public var supportedCheatFormats: Set<CheatFormat> {
